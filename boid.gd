@@ -8,9 +8,22 @@ extends CharacterBody3D
 
 @export var mass:float = 1.0
 @export var max_speed:float = 5.0
+@export var slowing_distance:float = 5
+
+func arrive():
+	var to_target = target.global_position - global_position
+	var dist = to_target.length()
+	# var distt1 = target.global_position.distance_to(global_position)
+	var ramped = (dist / slowing_distance) * max_speed
+	var clamped = min(ramped, max_speed)
+	var desired = (to_target / dist) * clamped
+	
+	DebugDraw3D.draw_sphere(target.global_position, slowing_distance, Color.CYAN)
+	
+	return desired - velocity
 
 
-func calculate_force():
+func seek():
 	var to_target = target.global_position - global_position
 	var desired:Vector3 = to_target.normalized() * max_speed
 	DebugDraw3D.draw_arrow(global_position, global_position + desired, Color.DARK_ORANGE, 0.1)
@@ -18,14 +31,16 @@ func calculate_force():
 	return desired - velocity
 	
 func _physics_process(delta: float) -> void:
-	accel = calculate_force() / mass
+	var force = arrive()
+	DebugDraw3D.draw_arrow(global_position, global_position + force * 10, Color.RED, 0.1)
+	accel = force / mass
 	velocity = velocity + accel * delta
 	speed = velocity.length()
 	if speed > 0:
 		look_at(global_position - velocity)
 	global_position += velocity * delta
 	
-	DebugDraw3D.draw_arrow(global_position, global_position + global_basis.z, Color.BURLYWOOD, 0.1)
+	# DebugDraw3D.draw_arrow(global_position, global_position + global_basis.z, Color.BURLYWOOD, 0.1)
 	DebugDraw3D.draw_arrow(global_position, global_position + velocity, Color.CORNFLOWER_BLUE, 0.1)
 
 	
